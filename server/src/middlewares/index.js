@@ -9,7 +9,8 @@ const limiter = rateLimit({
   max:      config.rateLimit.max,
   standardHeaders: true,
   legacyHeaders:   false,
-  message: { success: false, message: 'Too many requests. Try again later.' },
+  validate: false,
+  message: { success: false, message: 'Too many requests.' },
 });
 
 const applyGlobalMiddlewares = (app) => {

@@ -5,6 +5,7 @@ const notFound             = require('./src/middlewares/notFound.middleware');
 const errorHandler         = require('./src/middlewares/error.middleware');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // 1. Apply all global middlewares (helmet, cors, rate limit, body parsing)
 applyGlobalMiddlewares(app);
