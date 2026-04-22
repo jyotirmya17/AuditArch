@@ -1,5 +1,4 @@
-const chromium              = require('@sparticuz/chromium');
-const puppeteer            = require('puppeteer-core');
+const htmlPdf              = require('html-pdf-node');
 const CAProfile            = require('../models/CAProfile.model');
 const Client               = require('../models/Client.model');
 const Service              = require('../models/Service.model');
@@ -75,16 +74,9 @@ const generateBill = async (userId, clientId, overrides = {}) => {
     }
   });
 
-  const browser = await puppeteer.launch({
-    args:            chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath:  await chromium.executablePath(),
-    headless:        chromium.headless,
-  });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-  await browser.close();
+  const options = { format: 'A4' };
+  const file = { content: html };
+  const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
   return { pdfBuffer, billNumber };
 };
