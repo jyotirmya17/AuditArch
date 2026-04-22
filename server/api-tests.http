@@ -1,0 +1,85 @@
+### AuditArch API Testing Collection
+# Use the "REST Client" or "Thunder Client" extensions for VS Code
+
+@baseUrl = http://localhost:5000/api
+@authToken = {{login.response.body.token}}
+
+### 1. Signup (Firm Setup)
+# @name signup
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test.firm.{{$timestamp}}@auditarch.com",
+  "password": "password123",
+  "profile": {
+    "firmName": "Legacy Audit & Co",
+    "designation": "Chartered Accountants",
+    "addressLine1": "101 Platinum Plaza, Jaipur",
+    "bankAccountHolderName": "Legacy Audit & Co",
+    "accountNumber": "1234567890",
+    "bankName": "Global CA Bank",
+    "ifscCode": "GBNK0001234",
+    "billPrefix": "LAC"
+  }
+}
+
+### 2. Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "audit.test@arch.com",
+  "password": "password123"
+}
+
+### 3. Get Current User Profile (Protected)
+# @name getMe
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{authToken}}
+
+### 4. Create a New Client
+# @name createClient
+POST {{baseUrl}}/clients
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Sterling Steel Industries",
+  "pan": "ABCDE1234F",
+  "gstin": "08ABCDE1234F1Z5",
+  "addressLine1": "Plot 42, Industrial Area Phase II",
+  "city": "Jaipur"
+}
+
+### 5. Get All Clients
+# @name getClients
+GET {{baseUrl}}/clients
+Authorization: Bearer {{authToken}}
+
+### 6. Add Service to Client
+# @name addService
+@clientId = {{createClient.response.body.data._id}}
+POST {{baseUrl}}/services
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "description": "Statutory Audit FY 2024-25",
+  "amount": 25000,
+  "isOPE": false
+}
+
+### 7. Generate Bill (Puppeteer)
+# @name generateBill
+POST {{baseUrl}}/bills/generate
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "clientId": "{{clientId}}",
+  "billNumber": "LAC/2024/001",
+  "date": "2024-04-06"
+}
