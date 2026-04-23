@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signup, updateProfile } from '../api/auth.api';
+import { signup, updateProfile, getMe } from '../api/auth.api';
 
 export default function Signup() {
   const [step, setStep] = useState(1);
@@ -29,12 +29,42 @@ export default function Signup() {
       const { data } = await signup({ email: formData.email, password: formData.password });
       localStorage.setItem('token', data.token);
       setStep(2);
+      loadProfile();
     } catch (err) {
       setError(err.response?.data?.message || 'Identity setup failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  const loadProfile = async () => {
+    try {
+      const { data } = await getMe();
+      const profile = data.data.profile;
+      
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          firmName: profile.firmName || '',
+          designation: profile.designation || 'Chartered Accountants',
+          addressLine1: profile.addressLine1 || '',
+          bankAccountHolderName: profile.bankHolderName || profile.bankAccountHolderName || '',
+          accountNumber: profile.accountNumber || '',
+          bankName: profile.bankName || '',
+          ifscCode: profile.ifscCode || '',
+          billPrefix: profile.billPrefix || 'CA'
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (step === 2) {
+      loadProfile();
+    }
+  }, [step]);
 
   const handleStep2 = async (e) => {
     e.preventDefault();
@@ -52,6 +82,7 @@ export default function Signup() {
         billPrefix: formData.billPrefix
       };
       await updateProfile(profile);
+      localStorage.setItem('profileComplete', 'true');
       window.location.href = '/dashboard';
     } catch (err) {
       const serverErrors = err.response?.data?.errors;

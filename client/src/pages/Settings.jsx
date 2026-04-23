@@ -36,6 +36,7 @@ export default function Settings() {
     try {
       await updateProfile(formData);
       await refreshUser();
+      localStorage.setItem('profileComplete', 'true');
       setMsg('Profile updated successfully!');
       setTimeout(() => setMsg(''), 3000);
     } catch(e) {

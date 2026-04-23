@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getMe } from '../api/auth.api';
 
 export default function Login() {
   const [email, setEmail]    = useState('');
@@ -14,7 +15,23 @@ export default function Login() {
     setError('');
     try {
       await login(email, password);
-      navigate('/dashboard');
+      
+      const isComplete = localStorage.getItem('profileComplete');
+      if (isComplete === 'true') {
+        navigate('/dashboard');
+        return;
+      }
+      
+      const { data } = await getMe();
+      const profile = data?.data?.profile;
+      const isProfileComplete = profile && profile.firmName && profile.bankHolderName;
+
+      if (isProfileComplete) {
+        localStorage.setItem('profileComplete', 'true');
+        navigate('/dashboard');
+      } else {
+        navigate('/settings'); // go to profile form
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }
