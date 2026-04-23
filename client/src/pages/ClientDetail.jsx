@@ -69,16 +69,10 @@ export default function ClientDetail() {
       setGenerating(true);
       await saveBill(id, overrides);
       
-      const printContent = document.getElementById('bill-preview');
-      const originalBody = document.body.innerHTML;
-      
-      document.body.innerHTML = printContent.outerHTML;
-      
       window.print();
       
-      document.body.innerHTML = originalBody;
-      window.location.reload();
-      
+      setIsBillModalOpen(false);
+      setGenerating(false);
     } catch (e) {
       console.error(e);
       toast.error('Generation Failure: Could not save and print the bill.');

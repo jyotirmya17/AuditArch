@@ -871,19 +871,40 @@ td {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  #bill-preview, #bill-preview * {
-    visibility: visible;
-  }
-  #bill-preview {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .no-print {
+  
+  body > * {
     display: none !important;
+  }
+  
+  #bill-preview {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    z-index: 99999 !important;
+  }
+  
+  #bill-preview * {
+    visibility: visible !important;
+  }
+  
+  #bill-preview table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  #bill-preview table td,
+  #bill-preview table th {
+    border: 1px solid #000 !important;
+    padding: 5px 8px !important;
   }
 }
