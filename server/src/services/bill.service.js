@@ -51,30 +51,48 @@ const generateBill = async (userId, clientId, overrides = {}) => {
   const tdsAmount = professionalFeeServices.reduce((acc, s) => acc + (s.amount * (appliedTdsRate / 100)), 0);
   const netPayable = totalAmount - tdsAmount;
 
-  const billNumber = manualBillNumber || generateBillNumber(ca.billPrefix, ca.billCounter);
+  let billNumber = manualBillNumber || generateBillNumber(ca.billPrefix, ca.billCounter);
 
-  await Bill.create({
-    clientId, caId: ca._id, billNumber,
-    servicesSnapshot: services,
-    totalAmount, tdsAmount, netPayable,
-  });
+  let savedBill = null;
+  let attempts = 0;
+  let pdfBuffer = null;
+
+  while (!savedBill && attempts < 5) {
+    try {
+      pdfBuffer = await generatePDF({
+        ca, client, services, billNumber,
+        date: manualDate ? formatDate(new Date(manualDate)) : formatDate(new Date()),
+        totalAmount, tdsAmount, netPayable,
+      });
+    } catch (pdfErr) {
+      console.error('PDF GENERATION FAILED:', pdfErr.message);
+      console.error('PDF STACK:', pdfErr.stack);
+      throw pdfErr;
+    }
+
+    try {
+      savedBill = await Bill.create({
+        clientId, caId: ca._id, billNumber,
+        servicesSnapshot: services,
+        totalAmount, tdsAmount, netPayable,
+      });
+    } catch (err) {
+      if (err.code === 11000 && !manualBillNumber) {
+        attempts++;
+        await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
+        const updatedCA = await CAProfile.findById(ca._id);
+        billNumber = generateBillNumber(ca.billPrefix, updatedCA.billCounter);
+      } else {
+        throw err;
+      }
+    }
+  }
 
   if (!manualBillNumber) {
     await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
   }
 
-  try {
-    const pdfBuffer = await generatePDF({
-      ca, client, services, billNumber,
-      date: manualDate ? formatDate(new Date(manualDate)) : formatDate(new Date()),
-      totalAmount, tdsAmount, netPayable,
-    });
-    return { pdfBuffer, billNumber };
-  } catch (pdfErr) {
-    console.error('PDF GENERATION FAILED:', pdfErr.message);
-    console.error('PDF STACK:', pdfErr.stack);
-    throw pdfErr;
-  }
+  return { pdfBuffer, billNumber };
 };
 
 const getBillHistory = async (userId, clientId) => {
