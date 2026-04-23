@@ -63,13 +63,18 @@ const generateBill = async (userId, clientId, overrides = {}) => {
     await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
   }
 
-  const pdfBuffer = await generatePDF({
-    ca, client, services, billNumber,
-    date: manualDate ? formatDate(new Date(manualDate)) : formatDate(new Date()),
-    totalAmount, tdsAmount, netPayable,
-  });
-
-  return { pdfBuffer, billNumber };
+  try {
+    const pdfBuffer = await generatePDF({
+      ca, client, services, billNumber,
+      date: manualDate ? formatDate(new Date(manualDate)) : formatDate(new Date()),
+      totalAmount, tdsAmount, netPayable,
+    });
+    return { pdfBuffer, billNumber };
+  } catch (pdfErr) {
+    console.error('PDF GENERATION FAILED:', pdfErr.message);
+    console.error('PDF STACK:', pdfErr.stack);
+    throw pdfErr;
+  }
 };
 
 const getBillHistory = async (userId, clientId) => {

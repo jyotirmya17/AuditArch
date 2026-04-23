@@ -12,7 +12,11 @@ const generateBill = async (req, res, next) => {
       'Content-Length':       pdfBuffer.length,
     });
     res.send(pdfBuffer);
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('BILL GENERATION ERROR:', err.message);
+    console.error('STACK:', err.stack);
+    next(err);
+  }
 };
 
 const getBillHistory = async (req, res, next) => {
