@@ -81,12 +81,12 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
         <head>
           <title>Bill-${billNumber || 'download'}</title>
           <style>
-            @page { size: A4; margin: 15mm; }
+            @page { size: A4; margin: 0; }
             body {
               font-family: 'Times New Roman', serif;
-              padding: 0; margin: 0; background: white; color: black;
+              padding: 15mm; margin: 0; background: white; color: black;
             }
-            .preview-container { padding: 20px; max-width: 800px; margin: 0 auto; }
+            .preview-container { padding: 0; max-width: 800px; margin: 0 auto; }
             table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
             td, th { border: 1px solid #000; padding: 5px 8px; }
             img { max-width: 80px; }
