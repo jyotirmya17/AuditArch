@@ -5,7 +5,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import AddServiceModal from '../components/services/AddServiceModal';
 import BillPreviewModal from '../components/bills/BillPreviewModal';
 import { getServices } from '../api/services.api';
-import { generateBill, getBillHistory } from '../api/bills.api';
+import { saveBill, generateBill, getBillHistory } from '../api/bills.api';
 import { getClients, getCAProfile } from '../api/clients.api';
 import { formatCurrency } from '../utils/formatters';
 
@@ -67,19 +67,21 @@ export default function ClientDetail() {
   const handleConfirmGenerate = async (overrides) => {
     try {
       setGenerating(true);
-      const response = await generateBill(id, overrides);
+      await saveBill(id, overrides);
       
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      const printContent = document.getElementById('bill-preview');
+      const originalBody = document.body.innerHTML;
       
-      setIsBillModalOpen(false);
-      fetchInitialData();
-      toast.success('Invoice generated accurately.');
+      document.body.innerHTML = printContent.outerHTML;
+      
+      window.print();
+      
+      document.body.innerHTML = originalBody;
+      window.location.reload();
+      
     } catch (e) {
       console.error(e);
-      toast.error('Generation Failure: PDF engine could not satisfy the request.');
-    } finally {
+      toast.error('Generation Failure: Could not save and print the bill.');
       setGenerating(false);
     }
   };

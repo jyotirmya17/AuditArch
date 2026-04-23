@@ -869,3 +869,21 @@ td {
   transform: scale(1.05);
   background: var(--primary-hover);
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #bill-preview, #bill-preview * {
+    visibility: visible;
+  }
+  #bill-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

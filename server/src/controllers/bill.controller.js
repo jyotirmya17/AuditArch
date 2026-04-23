@@ -33,4 +33,13 @@ const getAllBills = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { generateBill, getBillHistory, getAllBills };
+const saveBill = async (req, res, next) => {
+  try {
+    const bill = await BillService.saveBillRecord(
+      req.user._id, req.params.clientId, req.body
+    );
+    res.json({ success: true, data: bill });
+  } catch (err) { next(err); }
+};
+
+module.exports = { generateBill, getBillHistory, getAllBills, saveBill };

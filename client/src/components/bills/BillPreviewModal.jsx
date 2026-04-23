@@ -49,7 +49,7 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 40 }}>
       {/* LEFT EDITOR PANEL */}
-      <div style={{ width: 340, background: '#f8faff', borderRadius: '24px 0 0 24px', height: '95vh', padding: 32, borderRight: '1px solid #e2e8f0', boxShadow: '0 0 40px rgba(0,0,0,0.1)', overflowY: 'auto' }}>
+      <div className="no-print" style={{ width: 340, background: '#f8faff', borderRadius: '24px 0 0 24px', height: '95vh', padding: 32, borderRight: '1px solid #e2e8f0', boxShadow: '0 0 40px rgba(0,0,0,0.1)', overflowY: 'auto' }}>
          <h3 style={{ fontSize: 18, marginBottom: 24 }}>Document Defaults</h3>
          
          <div className="input-group" style={{ marginBottom: 12 }}>
@@ -90,7 +90,7 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
             </div>
          </div>
 
-         <div style={{ padding: '16px', background: '#fef2f2', borderRadius: 12, marginBottom: 40 }}>
+         <div className="no-print" style={{ padding: '16px', background: '#fef2f2', borderRadius: 12, marginBottom: 40 }}>
             <h4 style={{ fontSize: 12, marginBottom: 12, color: '#b91c1c', textTransform: 'uppercase' }}>Bank Integrations</h4>
             <input className="input-pill" style={{ marginBottom: 8 }} placeholder="Bank Name" value={draftBill.bankName} onChange={e => updateDraft('bankName', e.target.value)} />
             <input className="input-pill" style={{ marginBottom: 8 }} placeholder="Account No" value={draftBill.accountNumber} onChange={e => updateDraft('accountNumber', e.target.value)} />
@@ -99,15 +99,15 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
          </div>
 
          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button className="btn-primary" onClick={() => onConfirm(draftBill)} disabled={generating} style={{ width: '100%', padding: 16 }}>
+            <button className="btn-primary no-print" onClick={() => onConfirm(draftBill)} disabled={generating} style={{ width: '100%', padding: 16 }}>
                {generating ? '🖋️ Generating...' : '📄 Confirm & Generate PDF'}
             </button>
-            <button className="btn-outline" onClick={onClose} style={{ width: '100%' }} disabled={generating}>Cancel</button>
+            <button className="btn-outline no-print" onClick={onClose} style={{ width: '100%' }} disabled={generating}>Cancel</button>
          </div>
       </div>
 
       {/* RIGHT PREVIEW PANEL */}
-      <div style={{ flex: 1, maxWidth: '900px', background: '#fff', height: '95vh', overflowY: 'auto', padding: '60px 80px', borderRadius: '0 24px 24px 0', fontFamily: '"Times New Roman", serif', color: '#000', position: 'relative', boxShadow: '0 0 40px rgba(0,0,0,0.1)' }}>
+      <div id="bill-preview" style={{ flex: 1, maxWidth: '900px', background: '#fff', height: '95vh', overflowY: 'auto', padding: '60px 80px', borderRadius: '0 24px 24px 0', fontFamily: '"Times New Roman", serif', color: '#000', position: 'relative', boxShadow: '0 0 40px rgba(0,0,0,0.1)' }}>
          {/* CA logo top-left */}
          <div style={{ marginBottom: 16 }}>
             <img src="/ca-logo.jpg" alt="CA Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />

@@ -7,5 +7,6 @@ router.use(protect);
 router.get('/history/all',         ctrl.getAllBills);
 router.get('/history/:clientId',   ctrl.getBillHistory);
 router.post('/generate/:clientId', ctrl.generateBill);
+router.post('/save/:clientId', ctrl.saveBill);
 
 module.exports = router;

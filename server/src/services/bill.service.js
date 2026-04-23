@@ -111,4 +111,60 @@ const getAllBills = async (userId) => {
     .select('-servicesSnapshot');
 };
 
-module.exports = { generateBill, getBillHistory, getAllBills };
+const saveBillRecord = async (userId, clientId, overrides = {}) => {
+  const { 
+    billNumber: manualBillNumber, 
+    services: inlineServices,
+    tdsRate
+  } = overrides;
+
+  const ca = await CAProfile.findOne({ userId });
+  if (!ca) throw new Error('CA profile not found');
+
+  const client = await Client.findOne({ _id: clientId, caId: ca._id });
+  if (!client) throw new Error('Client not found');
+
+  let services = await Service.find({ clientId }).sort({ dateAdded: 1 });
+  if (inlineServices && inlineServices.length > 0) {
+     services = inlineServices.map(s => ({ ...s, amount: Number(s.amount) || 0 }));
+  }
+
+  const appliedTdsRate = (tdsRate !== undefined) ? Number(tdsRate) : 10;
+  
+  const professionalFeeServices = services.filter(s => s.type !== 'Out of Pocket Expense');
+  const totalAmount = services.reduce((acc, s) => acc + s.amount, 0);
+  const tdsAmount = professionalFeeServices.reduce((acc, s) => acc + (s.amount * (appliedTdsRate / 100)), 0);
+  const netPayable = totalAmount - tdsAmount;
+
+  let billNumber = manualBillNumber || generateBillNumber(ca.billPrefix, ca.billCounter);
+  
+  let savedBill = null;
+  let attempts = 0;
+  
+  while (!savedBill && attempts < 5) {
+    try {
+      savedBill = await Bill.create({
+        clientId, caId: ca._id, billNumber,
+        servicesSnapshot: services,
+        totalAmount, tdsAmount, netPayable,
+      });
+    } catch (err) {
+      if (err.code === 11000 && !manualBillNumber) {
+        attempts++;
+        await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
+        const updated = await CAProfile.findById(ca._id);
+        billNumber = generateBillNumber(ca.billPrefix, updated.billCounter);
+      } else { 
+        throw err; 
+      }
+    }
+  }
+  
+  if (!manualBillNumber) {
+    await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
+  }
+  
+  return savedBill;
+};
+
+module.exports = { generateBill, getBillHistory, getAllBills, saveBillRecord };
