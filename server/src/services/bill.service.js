@@ -1,10 +1,9 @@
-const htmlPdf              = require('html-pdf-node');
 const CAProfile            = require('../models/CAProfile.model');
 const Client               = require('../models/Client.model');
 const Service              = require('../models/Service.model');
 const Bill                 = require('../models/Bill.model');
 const { calculateTDS }     = require('../utils/tds');
-const { generateBillHTML } = require('../utils/billHTML');
+const { generatePDF }      = require('../utils/generatePDF');
 const { generateBillNumber } = require('../utils/billNumber');
 const { formatDate }       = require('../utils/formatters');
 
@@ -64,19 +63,11 @@ const generateBill = async (userId, clientId, overrides = {}) => {
     await CAProfile.findByIdAndUpdate(ca._id, { $inc: { billCounter: 1 } });
   }
 
-  const html = generateBillHTML({
+  const pdfBuffer = await generatePDF({
     ca, client, services, billNumber,
     date: manualDate ? formatDate(new Date(manualDate)) : formatDate(new Date()),
-    totalAmount, tdsAmount, netPayable, appliedTdsRate,
-    overrides: {
-      companyName, companyAddress, clientName, clientAddress,
-      bankName, accountNumber, branchName, ifscCode
-    }
+    totalAmount, tdsAmount, netPayable,
   });
-
-  const options = { format: 'A4' };
-  const file = { content: html };
-  const pdfBuffer = await htmlPdf.generatePdf(file, options);
 
   return { pdfBuffer, billNumber };
 };
