@@ -49,6 +49,44 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
 
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const executePrint = (billNumber) => {
+    const billPreview = document.getElementById('bill-preview');
+    if (!billPreview) {
+      alert('Bill preview not found');
+      return;
+    }
+    
+    // Save current page content
+    const originalBody = document.body.innerHTML;
+    const originalTitle = document.title;
+    
+    // Set title for PDF filename
+    document.title = `Bill-${billNumber || 'download'}`;
+    
+    // Replace body with ONLY the bill preview
+    document.body.innerHTML = `
+      <div id="bill-preview" style="
+        font-family: 'Times New Roman', serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+      ">
+        ${billPreview.innerHTML}
+      </div>
+    `;
+    
+    // Print
+    window.print();
+    
+    // Restore everything
+    document.body.innerHTML = originalBody;
+    document.title = originalTitle;
+    
+    // Reload to restore React event handlers
+    window.location.reload();
+  };
+
   const handleConfirmAndPrint = async () => {
     setIsProcessing(true);
     try {
@@ -65,8 +103,7 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
           billDate: new Date(existingBill.generatedAt).toISOString().split('T')[0]
         }));
         setTimeout(() => {
-          window.print();
-          onConfirm();
+          executePrint(existingBill.billNumber);
         }, 100);
       } else {
         const res = await saveBill(client._id, draftBill);
@@ -76,8 +113,7 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
           billNumber: newBill.billNumber
         }));
         setTimeout(() => {
-          window.print();
-          onConfirm();
+          executePrint(newBill.billNumber);
         }, 100);
       }
     } catch (e) {
@@ -108,8 +144,7 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
       }));
       
       setTimeout(() => {
-        window.print();
-        onConfirm();
+        executePrint(lastBill.billNumber);
       }, 100);
     } catch (e) {
       console.error(e);

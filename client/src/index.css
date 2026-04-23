@@ -871,9 +871,14 @@ td {
 }
 
 @media print {
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
   }
   
   body > * {
@@ -882,15 +887,12 @@ td {
   
   #bill-preview {
     display: block !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
+    visibility: visible !important;
+    position: static !important;
     width: 100% !important;
-    height: auto !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     background: white !important;
-    z-index: 99999 !important;
   }
   
   #bill-preview * {
@@ -900,11 +902,16 @@ td {
   #bill-preview table {
     width: 100% !important;
     border-collapse: collapse !important;
+    page-break-inside: auto !important;
   }
   
-  #bill-preview table td,
-  #bill-preview table th {
+  #bill-preview td,
+  #bill-preview th {
     border: 1px solid #000 !important;
     padding: 5px 8px !important;
+  }
+  
+  #bill-preview img {
+    max-width: 80px !important;
   }
 }
