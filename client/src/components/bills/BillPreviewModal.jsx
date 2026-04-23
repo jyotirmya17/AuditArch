@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatCurrency, toWords } from '../../utils/formatters';
+import { saveBill, getBillHistory } from '../../api/bills.api';
 
 export default function BillPreviewModal({ client, services, ca, onClose, onConfirm, generating }) {
   // ca shape from /auth/me: { email, profile: { firmName, addressLine1, city, bankName, ... } }
@@ -45,6 +46,78 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
   const totalAmount = draftBill.services.reduce((acc, s) => acc + (Number(s.amount) || 0), 0);
   const tdsAmount = professionalFeeServices.reduce((acc, s) => acc + ((Number(s.amount) || 0) * (draftBill.tdsRate / 100)), 0);
   const netPayable = totalAmount - tdsAmount;
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleConfirmAndPrint = async () => {
+    setIsProcessing(true);
+    try {
+      const historyRes = await getBillHistory(client._id);
+      const history = historyRes.data.data || [];
+      const currentTotal = totalAmount;
+
+      const existingBill = history.find(b => b.totalAmount === currentTotal);
+
+      if (existingBill) {
+        setDraftBill(prev => ({
+          ...prev,
+          billNumber: existingBill.billNumber,
+          billDate: new Date(existingBill.generatedAt).toISOString().split('T')[0]
+        }));
+        setTimeout(() => {
+          window.print();
+          onConfirm();
+        }, 100);
+      } else {
+        const res = await saveBill(client._id, draftBill);
+        const newBill = res.data.data;
+        setDraftBill(prev => ({
+          ...prev,
+          billNumber: newBill.billNumber
+        }));
+        setTimeout(() => {
+          window.print();
+          onConfirm();
+        }, 100);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to save or print the bill.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReprintLast = async () => {
+    setIsProcessing(true);
+    try {
+      const historyRes = await getBillHistory(client._id);
+      const history = historyRes.data.data || [];
+      if (history.length === 0) {
+        alert('No bills to reprint for this client.');
+        return;
+      }
+      
+      const lastBill = history[0];
+      setDraftBill(prev => ({ 
+        ...prev, 
+        billNumber: lastBill.billNumber, 
+        billDate: new Date(lastBill.generatedAt).toISOString().split('T')[0],
+        services: lastBill.servicesSnapshot || prev.services,
+        tdsRate: (lastBill.tdsAmount / lastBill.totalAmount) * 100 || 10
+      }));
+      
+      setTimeout(() => {
+        window.print();
+        onConfirm();
+      }, 100);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to reprint the bill.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 40 }}>
@@ -99,8 +172,11 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
          </div>
 
          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button className="btn-primary no-print" onClick={() => onConfirm(draftBill)} disabled={generating} style={{ width: '100%', padding: 16 }}>
-               {generating ? '🖋️ Generating...' : '📄 Confirm & Generate PDF'}
+            <button className="btn-primary no-print" onClick={handleConfirmAndPrint} disabled={isProcessing || generating} style={{ width: '100%', padding: 16 }}>
+               {isProcessing || generating ? '🖋️ Generating...' : '📄 Confirm & Generate PDF'}
+            </button>
+            <button className="btn-outline no-print" onClick={handleReprintLast} disabled={isProcessing || generating} style={{ width: '100%' }}>
+               🔄 Reprint Last Bill
             </button>
             <button className="btn-outline no-print" onClick={onClose} style={{ width: '100%' }} disabled={generating}>Cancel</button>
          </div>

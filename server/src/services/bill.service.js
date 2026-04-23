@@ -120,6 +120,16 @@ const saveBillRecord = async (userId, clientId, overrides = {}) => {
   const tdsAmount = professionalFeeServices.reduce((acc, s) => acc + (s.amount * (appliedTdsRate / 100)), 0);
   const netPayable = totalAmount - tdsAmount;
 
+  const existingBill = await Bill.findOne({ 
+    clientId, 
+    caId: ca._id,
+    totalAmount 
+  }).sort({ generatedAt: -1 });
+
+  if (existingBill) {
+    return existingBill;
+  }
+
   let billNumber = manualBillNumber || generateBillNumber(ca.billPrefix, ca.billCounter);
   
   const savedBill = await Bill.create({

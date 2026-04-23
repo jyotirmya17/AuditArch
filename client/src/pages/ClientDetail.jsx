@@ -64,20 +64,9 @@ export default function ClientDetail() {
     setIsBillModalOpen(true);
   };
 
-  const handleConfirmGenerate = async (overrides) => {
-    try {
-      setGenerating(true);
-      await saveBill(id, overrides);
-      
-      window.print();
-      
-      setIsBillModalOpen(false);
-      setGenerating(false);
-    } catch (e) {
-      console.error(e);
-      toast.error('Generation Failure: Could not save and print the bill.');
-      setGenerating(false);
-    }
+  const handleConfirmGenerate = () => {
+    setIsBillModalOpen(false);
+    fetchInitialData();
   };
 
   const totalBilled = services.reduce((acc, s) => acc + s.amount, 0);
