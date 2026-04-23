@@ -56,35 +56,72 @@ export default function BillPreviewModal({ client, services, ca, onClose, onConf
       return;
     }
     
-    // Save current page content
-    const originalBody = document.body.innerHTML;
-    const originalTitle = document.title;
+    // Sync React input values to DOM attributes so innerHTML captures them
+    const inputs = billPreview.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.setAttribute('value', input.value);
+    });
     
-    // Set title for PDF filename
-    document.title = `Bill-${billNumber || 'download'}`;
+    // Create hidden iframe for isolated printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
     
-    // Replace body with ONLY the bill preview
-    document.body.innerHTML = `
-      <div id="bill-preview" style="
-        font-family: 'Times New Roman', serif;
-        padding: 20px;
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-      ">
-        ${billPreview.innerHTML}
-      </div>
-    `;
+    const iframeDoc = iframe.contentWindow.document;
     
-    // Print
-    window.print();
+    // Write isolated HTML & CSS
+    iframeDoc.open();
+    iframeDoc.write(`
+      <html>
+        <head>
+          <title>Bill-${billNumber || 'download'}</title>
+          <style>
+            @page { size: A4; margin: 15mm; }
+            body {
+              font-family: 'Times New Roman', serif;
+              padding: 0; margin: 0; background: white; color: black;
+            }
+            .preview-container { padding: 20px; max-width: 800px; margin: 0 auto; }
+            table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+            td, th { border: 1px solid #000; padding: 5px 8px; }
+            img { max-width: 80px; }
+            /* Force inputs to look like plain text */
+            input {
+              border: none !important;
+              background: transparent !important;
+              outline: none !important;
+              font-family: inherit !important;
+              font-size: inherit !important;
+              width: 100% !important;
+              color: #000 !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="preview-container">
+            ${billPreview.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
     
-    // Restore everything
-    document.body.innerHTML = originalBody;
-    document.title = originalTitle;
-    
-    // Reload to restore React event handlers
-    window.location.reload();
+    // Trigger print
+    iframe.contentWindow.focus();
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      // Cleanup iframe after print dialog closes
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 250);
   };
 
   const handleConfirmAndPrint = async () => {
